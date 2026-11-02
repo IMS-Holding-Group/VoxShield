@@ -1,6 +1,7 @@
 """نقطة تشغيل منصة VoxShield وتسجيل المسارات."""
 import logging
 import os
+import shutil
 import sys
 from logging.handlers import RotatingFileHandler
 
@@ -107,11 +108,16 @@ def bootstrap():
                    os.path.join(Config.DATASET_DIR, "replay"), os.path.join(Config.DATASET_DIR, "synthetic")):
         os.makedirs(folder, exist_ok=True)
     db.init_db()
+    import train
+    if not os.path.exists(Config.MODEL_PATH) and os.path.exists(Config.SEED_MODEL_PATH):
+        shutil.copy2(Config.SEED_MODEL_PATH, Config.MODEL_PATH)
+        print("تم نسخ النموذج المدرب من المستودع إلى {}".format(Config.MODEL_PATH))
     if not os.path.exists(Config.MODEL_PATH):
-        import train
         print("لم يُعثر على ملف النموذج، يجري الآن التدريب التلقائي...")
         summary = train.run_training(verbose=True)
         print("اكتمل التدريب بدقة {:.2f}%".format(summary["accuracy"] * 100))
+    elif train.register_model_run():
+        print("تم تسجيل بيانات تدريب النموذج الحالي في قاعدة البيانات")
 
 
 app = create_app()
@@ -119,6 +125,6 @@ app = create_app()
 if __name__ == "__main__":
     sys.stdout.reconfigure(errors="replace")
     bootstrap()
-    print("VoxShield يعمل على العنوان http://127.0.0.1:{}".format(Config.APP_PORT))
-    app.run(host="127.0.0.1", port=Config.APP_PORT, debug=False, threaded=True,
+    print("VoxShield يعمل على العنوان http://{}:{}".format(Config.APP_HOST, Config.APP_PORT))
+    app.run(host=Config.APP_HOST, port=Config.APP_PORT, debug=False, threaded=True,
             use_reloader=False, request_handler=NeutralRequestHandler)

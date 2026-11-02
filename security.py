@@ -241,7 +241,7 @@ def is_blocked_path(path):
 
 
 def enforce_https():
-    if not Config.FORCE_HTTPS or request.is_secure:
+    if not Config.FORCE_HTTPS or request.is_secure or request.path == "/health":
         return None
     return redirect(request.url.replace("http://", "https://", 1), code=301)
 

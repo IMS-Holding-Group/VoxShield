@@ -145,6 +145,8 @@ def run_training(verbose=False):
         )
         run_id = cursor.lastrowid
         version = "VS-RF-{}".format(run_id)
+        notes = "إصدار النموذج {}: {} عينة تدريب و{} عينة اختبار، زمن التدريب {} ثانية".format(
+            version, len(y_train), len(y_test), round(time.time() - started))
         bundle = {
             "pipeline": pipeline,
             "feature_names": FEATURE_NAMES,
@@ -154,19 +156,46 @@ def run_training(verbose=False):
             "run_id": run_id,
             "data_source": source,
             "trained_at": trained_at,
+            "run": {
+                "samples_count": int(len(y)),
+                "accuracy": accuracy,
+                "confusion_json": json.dumps({"labels": list(CLASSES), "matrix": confusion}),
+                "notes": notes,
+            },
         }
         os.makedirs(Config.MODEL_DIR, exist_ok=True)
         temp_path = Config.MODEL_PATH + ".tmp"
         joblib.dump(bundle, temp_path)
         os.replace(temp_path, Config.MODEL_PATH)
-        notes = "إصدار النموذج {}: {} عينة تدريب و{} عينة اختبار، زمن التدريب {} ثانية".format(
-            version, len(y_train), len(y_test), round(time.time() - started))
         conn.execute("UPDATE model_runs SET notes = ? WHERE id = ?", (notes, run_id))
         conn.commit()
     finally:
         conn.close()
     logger.info("اكتمل تدريب النموذج %s بدقة %.4f من مصدر %s", version, accuracy, source)
     return {"version": version, "accuracy": accuracy, "confusion": confusion, "source": source, "samples": int(len(y))}
+
+
+def register_model_run():
+    """تسجيل سجل تدريب النموذج المحمول داخل ملفه عند نقله إلى قاعدة بيانات لا تحتويه، بنفس رقمه."""
+    bundle = joblib.load(Config.MODEL_PATH)
+    run = bundle.get("run")
+    if not run or not bundle.get("run_id"):
+        return False
+    conn = db.connect(readonly=False)
+    try:
+        if conn.execute("SELECT 1 FROM model_runs WHERE id = ?", (bundle["run_id"],)).fetchone():
+            return False
+        conn.execute(
+            "INSERT INTO model_runs (id, trained_at, data_source, samples_count, accuracy, confusion_json, notes) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (bundle["run_id"], bundle["trained_at"], bundle["data_source"], run["samples_count"],
+             run["accuracy"], run["confusion_json"], run["notes"]),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    logger.info("تم تسجيل سجل تدريب النموذج %s في قاعدة البيانات", bundle["version"])
+    return True
 
 
 def _background_job():

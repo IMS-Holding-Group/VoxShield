@@ -34,7 +34,8 @@ class Config:
     BASE_DIR = BASE_DIR
     SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_urlsafe(64)
     APP_DEBUG = _get_bool("APP_DEBUG", False)
-    APP_PORT = _get_int("APP_PORT", 5000, 1, 65535)
+    APP_HOST = (os.getenv("APP_HOST") or "127.0.0.1").strip()
+    APP_PORT = _get_int("PORT", _get_int("APP_PORT", 5000, 1, 65535), 1, 65535)
     FORCE_HTTPS = _get_bool("FORCE_HTTPS", False)
     DATABASE_PATH = _resolve_path(os.getenv("DATABASE_PATH"), "data/voxshield.db")
     SESSION_IDLE_MINUTES = _get_int("SESSION_IDLE_MINUTES", 30, 5, 1440)
@@ -48,8 +49,9 @@ class Config:
     ]
     CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN", "").strip()
     CLOUDFLARE_ZONE_ID = os.getenv("CLOUDFLARE_ZONE_ID", "").strip()
-    MODEL_DIR = os.path.join(BASE_DIR, "models")
-    MODEL_PATH = os.path.join(MODEL_DIR, "voxshield_model.joblib")
+    SEED_MODEL_PATH = os.path.join(BASE_DIR, "models", "voxshield_model.joblib")
+    MODEL_PATH = _resolve_path(os.getenv("MODEL_PATH"), "models/voxshield_model.joblib")
+    MODEL_DIR = os.path.dirname(MODEL_PATH)
     DATASET_DIR = os.path.join(BASE_DIR, "data", "dataset")
     LOG_DIR = os.path.join(BASE_DIR, "logs")
     LOG_FILE = os.path.join(LOG_DIR, "app.log")
