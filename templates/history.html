@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}سجل التحاليل{% endblock %}
+{% block content %}
+<div class="page-head"><h1>سجل التحاليل</h1><span class="muted">إجمالي النتائج: {{ total }}</span></div>
+<section class="panel">
+  <form method="get" action="{{ url_for('pages.history') }}" class="filters">
+    <label class="field"><span>البحث باسم الملف</span><input type="search" name="q" value="{{ filters.q }}" maxlength="100"></label>
+    <label class="field"><span>النتيجة</span>
+      <select name="verdict">
+        <option value="">الكل</option>
+        <option value="genuine" {{ 'selected' if filters.verdict == 'genuine' }}>أصلي</option>
+        <option value="fake" {{ 'selected' if filters.verdict == 'fake' }}>مزيف</option>
+      </select>
+    </label>
+    <label class="field"><span>مستوى الخطورة</span>
+      <select name="risk">
+        <option value="">الكل</option>
+        <option value="low" {{ 'selected' if filters.risk == 'low' }}>منخفضة</option>
+        <option value="medium" {{ 'selected' if filters.risk == 'medium' }}>متوسطة</option>
+        <option value="high" {{ 'selected' if filters.risk == 'high' }}>مرتفعة</option>
+      </select>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ icon('search', 18) }}<span>تطبيق</span></button>
+  </form>
+</section>
+<section class="panel">
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>#</th><th>الملف</th><th>النتيجة</th><th>نوع الهجوم</th><th>الثقة</th><th>الخطورة</th><th>المدة</th>{% if current_user.role != 'trainee' %}<th>المستخدم</th>{% endif %}<th>التاريخ</th><th></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="num">{{ r.id }}</td>
+        <td>{{ r.file_name }}</td>
+        <td><span class="badge badge-{{ r.verdict }}">{{ LABELS.verdict[r.verdict] }}</span></td>
+        <td>{{ LABELS.attack[r.attack_type] }}</td>
+        <td class="num">{{ r.confidence|pct }}</td>
+        <td><span class="badge badge-risk-{{ r.risk_level }}">{{ LABELS.risk[r.risk_level] }}</span></td>
+        <td class="num">{{ r.duration_sec }} ث</td>
+        {% if current_user.role != 'trainee' %}<td>{{ r.owner_name }}</td>{% endif %}
+        <td>{{ r.created_at|dt }}</td>
+        <td><a href="{{ url_for('pages.report', analysis_id=r.id) }}">عرض التقرير</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pages > 1 %}
+  <nav class="pagination" aria-label="ترقيم الصفحات">
+    {% if page > 1 %}<a class="btn btn-outline btn-sm" href="{{ url_for('pages.history', q=filters.q, verdict=filters.verdict, risk=filters.risk, page=page - 1) }}">{{ icon('prev', 16) }}<span>السابق</span></a>{% endif %}
+    <span class="num">صفحة {{ page }} من {{ pages }}</span>
+    {% if page < pages %}<a class="btn btn-outline btn-sm" href="{{ url_for('pages.history', q=filters.q, verdict=filters.verdict, risk=filters.risk, page=page + 1) }}"><span>التالي</span>{{ icon('next', 16) }}</a>{% endif %}
+  </nav>
+  {% endif %}
+  {% else %}
+  <p class="muted">لا توجد نتائج مطابقة.</p>
+  {% endif %}
+</section>
+{% endblock %}

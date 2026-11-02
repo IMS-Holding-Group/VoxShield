@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}التنبيهات{% endblock %}
+{% block content %}
+<div class="page-head"><h1>التنبيهات</h1><span class="muted">إجمالي التنبيهات: {{ total }}</span></div>
+<section class="panel">
+  <form method="get" action="{{ url_for('pages.alerts') }}" class="filters">
+    <label class="field"><span>الحالة</span>
+      <select name="status">
+        <option value="">الكل</option>
+        <option value="new" {{ 'selected' if status == 'new' }}>جديد</option>
+        <option value="reviewed" {{ 'selected' if status == 'reviewed' }}>تمت المراجعة</option>
+      </select>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ icon('search', 18) }}<span>تطبيق</span></button>
+  </form>
+</section>
+<section class="panel">
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>#</th><th>الملف</th><th>الخطورة</th><th>نوع الهجوم</th><th>الثقة</th><th>المستخدم</th><th>التاريخ</th><th>الحالة</th><th></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="num">{{ r.id }}</td>
+        <td><a href="{{ url_for('pages.report', analysis_id=r.analysis_id) }}">{{ r.file_name }}</a></td>
+        <td><span class="badge badge-risk-{{ r.level }}">{{ LABELS.risk[r.level] }}</span></td>
+        <td>{{ LABELS.attack[r.attack_type] }}</td>
+        <td class="num">{{ r.confidence|pct }}</td>
+        <td>{{ r.owner_name }}</td>
+        <td>{{ r.created_at|dt }}</td>
+        <td class="alert-status" data-alert-status="{{ r.id }}">
+          <span class="badge badge-status-{{ r.status }}">{{ LABELS.alert_status[r.status] }}</span>
+          {% if r.status == 'reviewed' %}<span class="cell-sub">{{ r.reviewer or '-' }} {{ r.reviewed_at|dt }}</span>{% endif %}
+        </td>
+        <td>{% if r.status == 'new' %}<button type="button" class="btn btn-outline btn-sm" data-review-id="{{ r.id }}">{{ icon('check', 16) }}<span>وسم كمُراجَع</span></button>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pages > 1 %}
+  <nav class="pagination" aria-label="ترقيم الصفحات">
+    {% if page > 1 %}<a class="btn btn-outline btn-sm" href="{{ url_for('pages.alerts', status=status, page=page - 1) }}">{{ icon('prev', 16) }}<span>السابق</span></a>{% endif %}
+    <span class="num">صفحة {{ page }} من {{ pages }}</span>
+    {% if page < pages %}<a class="btn btn-outline btn-sm" href="{{ url_for('pages.alerts', status=status, page=page + 1) }}"><span>التالي</span>{{ icon('next', 16) }}</a>{% endif %}
+  </nav>
+  {% endif %}
+  {% else %}
+  <p class="muted">لا توجد تنبيهات.</p>
+  {% endif %}
+</section>
+{% endblock %}

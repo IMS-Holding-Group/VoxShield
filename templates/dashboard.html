@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}لوحة المعلومات{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>لوحة المعلومات</h1>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('pages.analyze') }}">{{ icon('upload', 18) }}<span>فحص مقطع جديد</span></a>
+    <a class="btn btn-outline" href="{{ url_for('simulation.simulation_index') }}">{{ icon('play', 18) }}<span>بيئة المحاكاة</span></a>
+  </div>
+</div>
+<section class="stats-grid">
+  <div class="panel stat"><span class="stat-label">{{ icon('wave') }} عدد الفحوصات الكلي</span><span class="stat-value">{{ stats.total }}</span></div>
+  <div class="panel stat"><span class="stat-label">{{ icon('shield') }} المقاطع الأصلية</span><span class="stat-value text-genuine">{{ stats.genuine }}</span></div>
+  <div class="panel stat"><span class="stat-label">{{ icon('alert') }} المقاطع المزيفة</span><span class="stat-value text-fake">{{ stats.fake }}</span></div>
+  {% if current_user.role in ('admin', 'analyst') %}
+  <div class="panel stat"><span class="stat-label">{{ icon('bell') }} تنبيهات غير مُراجَعة</span><span class="stat-value">{{ pending_alerts }}</span></div>
+  {% endif %}
+</section>
+<section class="panel">
+  <h2>نسبة المقاطع الأصلية إلى المزيفة</h2>
+  {% if stats.total %}
+  <div class="ratio-bar" role="img" aria-label="الأصلي {{ genuine_pct }}% والمزيف {{ fake_pct }}%">
+    <div class="ratio-genuine" data-width="{{ genuine_pct }}"></div>
+    <div class="ratio-fake" data-width="{{ fake_pct }}"></div>
+  </div>
+  <div class="ratio-legend"><span><i class="legend-swatch swatch-genuine"></i>أصلي {{ genuine_pct }}%</span><span><i class="legend-swatch swatch-fake"></i>مزيف {{ fake_pct }}%</span></div>
+  {% else %}
+  <p class="muted">لا توجد فحوصات بعد.</p>
+  {% endif %}
+</section>
+<div class="two-cols">
+  <section class="panel">
+    <h2>آخر 5 فحوصات</h2>
+    {% if recent %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>الملف</th><th>النتيجة</th><th>الثقة</th><th>الخطورة</th><th>التاريخ</th></tr></thead>
+        <tbody>
+        {% for r in recent %}
+        <tr>
+          <td><a href="{{ url_for('pages.report', analysis_id=r.id) }}">{{ r.file_name }}</a></td>
+          <td><span class="badge badge-{{ r.verdict }}">{{ LABELS.verdict[r.verdict] }}</span></td>
+          <td class="num">{{ r.confidence|pct }}</td>
+          <td><span class="badge badge-risk-{{ r.risk_level }}">{{ LABELS.risk[r.risk_level] }}</span></td>
+          <td>{{ r.created_at|dt }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="muted">لم تُجرَ أي فحوصات حتى الآن.</p>
+    {% endif %}
+  </section>
+  {% if current_user.role in ('admin', 'analyst') %}
+  <section class="panel">
+    <h2>آخر التنبيهات</h2>
+    {% if latest_alerts %}
+    <ul class="list">
+      {% for al in latest_alerts %}
+      <li class="list-item">
+        <a href="{{ url_for('pages.report', analysis_id=al.analysis_id) }}">{{ al.file_name }}</a>
+        <span class="list-meta"><span class="badge badge-risk-{{ al.level }}">{{ LABELS.risk[al.level] }}</span><span class="badge badge-status-{{ al.status }}">{{ LABELS.alert_status[al.status] }}</span>{{ al.created_at|dt }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <a class="link-more" href="{{ url_for('pages.alerts') }}">عرض كل التنبيهات</a>
+    {% else %}
+    <p class="muted">لا توجد تنبيهات.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

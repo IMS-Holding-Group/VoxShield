@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}تقرير الفحص رقم {{ a.id }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>تقرير الفحص رقم {{ a.id }}</h1>
+  <div class="actions no-print">
+    <button type="button" id="print-report" class="btn btn-outline">{{ icon('print', 18) }}<span>طباعة التقرير</span></button>
+    <a class="btn btn-primary" href="{{ url_for('pages.analyze') }}">{{ icon('upload', 18) }}<span>فحص مقطع آخر</span></a>
+  </div>
+</div>
+<section class="panel result-panel">
+  <div class="result-main">
+    <span class="result-label">النتيجة</span>
+    <span class="result-verdict text-{{ a.verdict }}">{{ LABELS.verdict[a.verdict] }}</span>
+  </div>
+  <dl class="result-facts">
+    <div><dt>نسبة الثقة</dt><dd class="num">{{ a.confidence|pct }}</dd></div>
+    <div><dt>نوع الهجوم</dt><dd>{{ LABELS.attack[a.attack_type] }}</dd></div>
+    <div><dt>مستوى الخطورة</dt><dd><span class="badge badge-risk-{{ a.risk_level }}">{{ LABELS.risk[a.risk_level] }}</span></dd></div>
+  </dl>
+  {% if inconclusive %}<div class="notice notice-warn">{{ icon('alert') }}<span>النتيجة غير حاسمة وتستدعي مراجعة بشرية</span></div>{% endif %}
+  {% if demo_model %}<p class="small-note">{{ demo_note }}</p>{% endif %}
+</section>
+<div class="two-cols">
+  <section class="panel">
+    <h2>احتمالات الفئات</h2>
+    <div id="prob-bars" class="prob-bars"></div>
+  </section>
+  <section class="panel">
+    <h2>العوامل التي استند إليها القرار</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>العامل</th><th>الاتجاه</th><th>الإسهام</th></tr></thead>
+        <tbody>
+        {% for f in a.factors %}
+        <tr>
+          <td>{{ f.label }}<span class="cell-sub">أبرز خاصية: {{ f.top_feature }}</span></td>
+          <td>{{ f.direction }}</td>
+          <td class="num">{{ f.percent }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+<section class="panel">
+  <h2>المخطط الطيفي للمقطع</h2>
+  <canvas id="spectrogram" class="chart-canvas" width="960" height="300" aria-label="المخطط الطيفي"></canvas>
+</section>
+<section class="panel">
+  <h2>منحنى الغلاف الطيفي المتوسط</h2>
+  <canvas id="envelope" class="chart-canvas" width="960" height="280" aria-label="منحنى الغلاف الطيفي"></canvas>
+</section>
+<div class="two-cols">
+  <section class="panel">
+    <h2>البصمة الصوتية المختصرة</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>الخاصية</th><th>القيمة</th></tr></thead>
+        <tbody>
+        {% for item in a.fingerprint %}
+        <tr><td>{{ item.label }}</td><td class="num">{{ item.value }} {{ item.unit }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>معلومات الملف والفحص</h2>
+    <dl class="info-list">
+      <div><dt>اسم الملف</dt><dd>{{ a.file_name }}</dd></div>
+      <div><dt>المدة</dt><dd class="num">{{ a.duration_sec }} ثانية</dd></div>
+      <div><dt>معدل العينة</dt><dd class="num">{{ a.sample_rate }} هرتز</dd></div>
+      <div><dt>تجزئة SHA-256</dt><dd class="hash">{{ a.file_hash }}</dd></div>
+      <div><dt>زمن التحليل</dt><dd class="num">{{ a.processing_ms }} ملّي ثانية</dd></div>
+      <div><dt>تاريخ الفحص</dt><dd>{{ a.created_at|dt }}</dd></div>
+      <div><dt>إصدار النموذج</dt><dd>{{ a.model_version }}</dd></div>
+      <div><dt>صاحب الفحص</dt><dd>{{ a.owner_name }}</dd></div>
+    </dl>
+    <h3>زمن المراحل</h3>
+    <dl class="info-list">
+      <div><dt>رفع المقطع</dt><dd class="num">{{ a.stage_timings.upload }} ملّي ثانية</dd></div>
+      <div><dt>استخلاص البصمة الصوتية</dt><dd class="num">{{ a.stage_timings.extract }} ملّي ثانية</dd></div>
+      <div><dt>التصنيف والمقارنة</dt><dd class="num">{{ a.stage_timings.classify }} ملّي ثانية</dd></div>
+      <div><dt>إصدار النتيجة</dt><dd class="num">{{ a.stage_timings.report }} ملّي ثانية</dd></div>
+    </dl>
+  </section>
+</div>
+<script type="application/json" id="report-data">{{ chart_data|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/report.js') }}"></script>{% endblock %}

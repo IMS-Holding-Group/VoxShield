@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}خطأ {{ code }}{% endblock %}
+{% block content %}
+<section class="panel error-panel">
+  <p class="error-code">{{ code }}</p>
+  <h1>تعذر عرض الصفحة</h1>
+  <p>{{ message }}</p>
+  <a class="btn btn-primary" href="{{ url_for('pages.dashboard') if current_user else url_for('auth.login') }}">العودة إلى الصفحة الرئيسية</a>
+</section>
+{% endblock %}

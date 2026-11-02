@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ scenario.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ scenario.title }}</h1>
+  <a class="btn btn-outline no-print" href="{{ url_for('simulation.simulation_index') }}">العودة إلى السيناريوهات</a>
+</div>
+<p class="lead">{{ scenario.summary }}</p>
+<section class="panel">
+  <div class="steps-head">
+    <h2>الخطوات</h2>
+    <span id="step-counter" class="num muted"></span>
+  </div>
+  <ol class="step-dots" id="step-dots">
+    {% for step in scenario.steps %}<li data-dot="{{ loop.index0 }}">{{ loop.index }}</li>{% endfor %}
+  </ol>
+  {% for step in scenario.steps %}
+  <article class="step {{ '' if loop.index0 == start_step else 'hidden' }}" data-step="{{ loop.index0 }}">
+    <h3>الخطوة {{ loop.index }}: {{ step.title }}</h3>
+    <p>{{ step.body }}</p>
+    <div class="observe">
+      <h4>ما الذي يجب ملاحظته</h4>
+      <ul>{% for note in step.notes %}<li>{{ note }}</li>{% endfor %}</ul>
+    </div>
+  </article>
+  {% endfor %}
+  <div class="step-nav">
+    <button type="button" id="step-prev" class="btn btn-outline">{{ icon('prev', 18) }}<span>السابق</span></button>
+    <button type="button" id="step-next" class="btn btn-primary"><span>التالي</span>{{ icon('next', 18) }}</button>
+  </div>
+</section>
+<section class="samples-grid">
+  {% for sample in samples %}
+  <article class="panel sample" data-sample="{{ sample.key }}">
+    <h2>{{ sample.title }}</h2>
+    <canvas class="chart-canvas sample-canvas" width="720" height="240" aria-label="المخطط الطيفي للعينة"></canvas>
+    <audio controls preload="none" src="{{ url_for('simulation.sample_audio', key=key, sample=sample.key) }}"></audio>
+    <button type="button" class="btn btn-accent" data-analyze="{{ sample.key }}">{{ icon('shield', 18) }}<span>فحص هذا المقطع</span></button>
+    <div class="sample-result hidden" aria-live="polite"></div>
+  </article>
+  {% endfor %}
+</section>
+<script type="application/json" id="scenario-data">{{ page_data|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/simulation.js') }}"></script>{% endblock %}

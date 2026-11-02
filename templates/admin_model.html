@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}حالة النموذج{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>حالة النموذج</h1>
+  <form method="post" action="{{ url_for('admin.retrain') }}" data-confirm="ستبدأ إعادة تدريب النموذج في الخلفية وقد تستغرق عدة دقائق. هل تريد المتابعة؟">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn btn-primary" {{ 'disabled' if training.running }}>{{ icon('refresh', 18) }}<span>إعادة التدريب</span></button>
+  </form>
+</div>
+{% if message %}<div class="notice notice-info" role="status">{{ icon('check') }}<span>{{ message }}</span></div>{% endif %}
+{% if training.running %}<div class="notice notice-warn" id="training-running" data-training="1">{{ icon('spinner', 20, 'spin') }}<span>التدريب قيد التنفيذ منذ {{ training.started_at|dt }}، ستُحدَّث الصفحة تلقائياً.</span></div>{% endif %}
+{% if training.error %}<div class="notice notice-error">{{ icon('alert') }}<span>{{ training.error }}</span></div>{% endif %}
+{% if latest %}
+<section class="stats-grid">
+  <div class="panel stat"><span class="stat-label">مصدر بيانات التدريب</span><span class="stat-value">{{ latest.data_source }}</span></div>
+  <div class="panel stat"><span class="stat-label">عدد العينات</span><span class="stat-value num">{{ latest.samples_count }}</span></div>
+  <div class="panel stat"><span class="stat-label">الدقة على بيانات الاختبار</span><span class="stat-value num">{{ latest.accuracy|pct(2) }}</span></div>
+  <div class="panel stat"><span class="stat-label">تاريخ آخر تدريب</span><span class="stat-value stat-value-sm">{{ latest.trained_at|dt }}</span></div>
+</section>
+<div class="two-cols">
+  <section class="panel">
+    <h2>مصفوفة الالتباس</h2>
+    <p class="muted">الصفوف هي الفئة الفعلية والأعمدة هي الفئة المتوقعة.</p>
+    <div class="table-wrap">
+      <table class="table confusion">
+        <thead><tr><th>الفعلي / المتوقع</th>{% for c in confusion.labels %}<th>{{ LABELS.class[c] }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for row in confusion.matrix %}
+        {% set i = loop.index0 %}
+        <tr><th>{{ LABELS.class[confusion.labels[i]] }}</th>{% for v in row %}<td class="num {{ 'diag' if loop.index0 == i }}">{{ v }}</td>{% endfor %}</tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">{{ latest.notes }}</p>
+    {% if not model_exists %}<div class="notice notice-error">ملف النموذج غير موجود حالياً.</div>{% endif %}
+  </section>
+  <section class="panel">
+    <h2>سجل التدريب</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>الإصدار</th><th>المصدر</th><th>العينات</th><th>الدقة</th><th>التاريخ</th></tr></thead>
+        <tbody>
+        {% for r in runs %}
+        <tr><td>VS-RF-{{ r.id }}</td><td>{{ r.data_source }}</td><td class="num">{{ r.samples_count }}</td><td class="num">{{ r.accuracy|pct(2) }}</td><td>{{ r.trained_at|dt }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% else %}
+<section class="panel"><p class="muted">لم يُدرَّب أي نموذج بعد.</p></section>
+{% endif %}
+{% if cloudflare %}
+<section class="panel">
+  <h2>{{ icon('cloud') }} حالة Cloudflare (للقراءة فقط)</h2>
+  {% if cloudflare.ok %}
+  <dl class="info-list info-grid">
+    <div><dt>النطاق</dt><dd>{{ cloudflare.zone }}</dd></div>
+    <div><dt>حالة النطاق</dt><dd>{{ cloudflare.zone_status }}</dd></div>
+    <div><dt>البروكسي</dt><dd class="num">{{ cloudflare.proxied }} من {{ cloudflare.proxiable }} سجلات مفعلة</dd></div>
+    <div><dt>وضع SSL/TLS</dt><dd>{{ cloudflare.ssl or '-' }}</dd></div>
+    <div><dt>Always HTTPS</dt><dd>{{ cloudflare.always_https or '-' }}</dd></div>
+    <div><dt>أدنى إصدار TLS</dt><dd>{{ cloudflare.min_tls or '-' }}</dd></div>
+    <div><dt>Browser Integrity Check</dt><dd>{{ cloudflare.browser_check or '-' }}</dd></div>
+    <div><dt>Security Level</dt><dd>{{ cloudflare.security_level or '-' }}</dd></div>
+    <div><dt>Bot Fight Mode</dt><dd>{{ 'مفعل' if cloudflare.bot_fight_mode else ('معطل' if cloudflare.bot_fight_mode is not none else '-') }}</dd></div>
+    <div><dt>آخر تعديل على النطاق</dt><dd>{{ cloudflare.modified_on|dt }}</dd></div>
+  </dl>
+  {% else %}
+  <p class="muted">تعذر جلب حالة Cloudflare حالياً.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin.js') }}"></script>{% endblock %}

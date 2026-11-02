@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}فحص مقطع صوتي{% endblock %}
+{% block content %}
+<div class="page-head"><h1>فحص مقطع صوتي</h1></div>
+<div class="two-cols">
+  <section class="panel">
+    <h2>رفع ملف صوتي</h2>
+    <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="منطقة رفع الملف">
+      {{ icon('upload', 32) }}
+      <p class="dropzone-title">اسحب الملف وأفلته هنا</p>
+      <p class="muted">الصيغ المقبولة: WAV وMP3 وM4A وOGG وFLAC، بحد أقصى {{ max_mb }} ميجابايت و{{ max_seconds }} ثانية</p>
+      <button type="button" id="pick-file" class="btn btn-outline">{{ icon('file', 18) }}<span>اختيار ملف</span></button>
+      <input type="file" id="file-input" class="hidden" accept=".wav,.mp3,.m4a,.ogg,.flac,audio/*">
+    </div>
+    <p id="file-label" class="file-label muted"></p>
+  </section>
+  <section class="panel">
+    <h2>التسجيل المباشر من الميكروفون</h2>
+    <p class="muted">يمكنك تسجيل مقطع بحد أقصى 30 ثانية ثم إرساله للفحص مباشرة.</p>
+    <div class="recorder">
+      <button type="button" id="rec-start" class="btn btn-primary">{{ icon('mic', 18) }}<span>بدء التسجيل</span></button>
+      <button type="button" id="rec-stop" class="btn btn-outline" disabled>{{ icon('stop', 18) }}<span>إيقاف وإرسال</span></button>
+      <span id="rec-timer" class="rec-timer num">0:00 / 0:30</span>
+    </div>
+    <p id="rec-status" class="muted"></p>
+  </section>
+</div>
+<section class="panel">
+  <h2>مراحل الفحص</h2>
+  <ol class="stages" id="stages">
+    <li class="stage" data-stage="upload"><span class="stage-icon">{{ icon('dot', 18) }}</span><span class="stage-name">رفع المقطع</span><span class="stage-state">بانتظار الملف</span><span class="stage-time num"></span></li>
+    <li class="stage" data-stage="extract"><span class="stage-icon">{{ icon('dot', 18) }}</span><span class="stage-name">استخلاص البصمة الصوتية</span><span class="stage-state">بالانتظار</span><span class="stage-time num"></span></li>
+    <li class="stage" data-stage="classify"><span class="stage-icon">{{ icon('dot', 18) }}</span><span class="stage-name">التصنيف والمقارنة</span><span class="stage-state">بالانتظار</span><span class="stage-time num"></span></li>
+    <li class="stage" data-stage="report"><span class="stage-icon">{{ icon('dot', 18) }}</span><span class="stage-name">إصدار النتيجة</span><span class="stage-state">بالانتظار</span><span class="stage-time num"></span></li>
+  </ol>
+  <div id="analyze-message" class="notice hidden" role="status"></div>
+</section>
+<template id="icon-templates">
+  <span data-icon="dot">{{ icon('dot', 18) }}</span>
+  <span data-icon="spinner">{{ icon('spinner', 18, 'spin') }}</span>
+  <span data-icon="check">{{ icon('check', 18) }}</span>
+  <span data-icon="alert">{{ icon('alert', 18) }}</span>
+</template>
+<script type="application/json" id="analyze-config">{{ {"max_mb": max_mb, "max_seconds": max_seconds}|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/analyze.js') }}"></script>{% endblock %}

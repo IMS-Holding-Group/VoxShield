@@ -1,0 +1,23 @@
+# منع عرض محتويات المجلدات
+Options -Indexes
+
+# حجب الملفات المخفية وملفات الإعدادات وقواعد البيانات والنسخ الاحتياطية والسجلات
+<FilesMatch "(^\.|\.(env|db|sqlite|sqlite3|bak|backup|old|log|joblib|ini|cfg|conf|py|pyc|txt\.bak)$)">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_alias.c>
+    RedirectMatch 404 /\.(git|env|htaccess|gitignore)
+    RedirectMatch 404 ^/(data|models|logs|engine|routes|templates|__pycache__)(/|$)
+    RedirectMatch 404 ^/(app|config|database|security|train)\.py$
+    RedirectMatch 404 ^/requirements\.txt$
+</IfModule>
+
+# إخفاء توقيع الخادم في صفحات الأخطاء
+ServerSignature Off
+
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+</IfModule>

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}بيئة محاكاة الهجمات{% endblock %}
+{% block content %}
+<div class="page-head"><h1>بيئة محاكاة الهجمات</h1></div>
+<p class="lead">بيئة تعليمية توضح آلية عمل هجمات التزييف الصوتي الشائعة خطوة بخطوة وكيفية كشفها. جميع المقاطع المعروضة إشارات توضيحية مولدة خوارزمياً ولا تمثل صوت أي شخص حقيقي.</p>
+<section class="scenario-grid">
+  {% for key, s in scenarios.items() %}
+  {% set p = progress.get(key) %}
+  {% set total = s.steps|length %}
+  {% set done = (p.last_step + 1) if p else 0 %}
+  <article class="panel scenario-card">
+    <h2>{{ s.index }}. {{ s.title }}</h2>
+    <p>{{ s.summary }}</p>
+    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="{{ total }}" aria-valuenow="{{ done }}">
+      <div class="progress-fill" data-width="{{ ((total if p and p.completed else done) / total * 100)|round(0) }}"></div>
+    </div>
+    <p class="muted">{% if p and p.completed %}مكتمل{% elif p %}الخطوة {{ done }} من {{ total }}{% else %}لم يبدأ بعد{% endif %}</p>
+    <a class="btn btn-primary" href="{{ url_for('simulation.scenario', key=key) }}">{{ icon('play', 18) }}<span>{{ 'متابعة السيناريو' if p else 'بدء السيناريو' }}</span></a>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

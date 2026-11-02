@@ -1,0 +1,12 @@
+.env
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.db
+*.db-journal
+logs/
+models/*.joblib
+models/*.tmp
+data/dataset/**/*.wav
+بيانات الدخول.txt

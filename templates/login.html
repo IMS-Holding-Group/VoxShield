@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}تسجيل الدخول{% endblock %}
+{% block body_class %}page-login{% endblock %}
+{% block content %}
+<section class="auth-shell">
+  <div class="auth-brand">
+    <img class="auth-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt="VoxShield">
+    <p class="auth-lead">منصة كشف الهجمات الصوتية والتزييف الصوتي</p>
+    <ul class="auth-points">
+      <li>{{ icon('shield') }}<span>كشف إعادة التشغيل والأصوات المولدة بالذكاء الاصطناعي</span></li>
+      <li>{{ icon('wave') }}<span>تقرير مفصل لكل مقطع مع مستوى الخطورة والمؤشرات</span></li>
+      <li>{{ icon('play') }}<span>بيئة محاكاة تدريبية آمنة لفهم أنماط الهجمات</span></li>
+    </ul>
+  </div>
+  <div class="auth-panel">
+    <div class="auth-box">
+      <h1>تسجيل الدخول</h1>
+      <p class="lead">أدخل بيانات حسابك للمتابعة إلى المنصة</p>
+      {% if error %}<div class="notice notice-error" role="alert">{{ icon('alert') }}<span>{{ error }}</span></div>{% endif %}
+      <form method="post" action="{{ url_for('auth.login') }}" class="form" autocomplete="on">
+        <input type="hidden" name="csrf_token" value="{{ login_csrf }}">
+        <input type="hidden" name="next" value="{{ next_value }}">
+        <label class="field"><span>اسم المستخدم</span><input type="text" name="username" value="{{ username }}" maxlength="64" required autofocus autocomplete="username"></label>
+        <label class="field"><span>كلمة السر</span><input type="password" name="password" maxlength="128" required autocomplete="current-password"></label>
+        <button type="submit" class="btn btn-primary btn-block">{{ icon('logout', 18) }}<span>دخول</span></button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
